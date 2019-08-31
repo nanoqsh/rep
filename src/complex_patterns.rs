@@ -146,14 +146,16 @@ mod tests {
 
     #[test]
     fn many_pattern() {
-        let pattern = Pattern("a") * 3;
-        assert!(pattern.test("aaa"));
-        assert!(!pattern.test("aa"));
-        assert!(!pattern.test("aaaa"));
+        let pattern = Pattern("ab") * 3;
+        assert!(pattern.test("ababab"));
+        assert!(!pattern.test("aba"));
+        assert!(!pattern.test("a"));
+        assert!(!pattern.test("abab"));
+        assert!(!pattern.test("abababab"));
         assert!(!pattern.test(""));
 
-        assert_eq!(pattern.scan_split("aaaa"), Ok(("aaa", "a")));
-        assert_eq!(pattern.scan_split("aaa"), Ok(("aaa", "")));
+        assert_eq!(pattern.scan_split("abababab"), Ok(("ababab", "ab")));
+        assert_eq!(pattern.scan_split("ababab"), Ok(("ababab", "")));
         assert_eq!(pattern.scan_split(""), Err(()));
 
         let empty_pattern = Pattern("b") * 0;
@@ -238,6 +240,25 @@ mod tests {
         assert!(b_bb.test("0101"));
         assert!(!b_bb.test("010101"));
         assert!(!b_bb.test(""));
+
+        let not_a_3 = Pattern(|c: char| c != 'a') * 3;
+        assert!(not_a_3.test("zzz"));
+        assert!(!not_a_3.test("zz"));
+        assert!(!not_a_3.test("zzzz"));
+        assert!(!not_a_3.test("aaa"));
+        assert!(!not_a_3.test("zza"));
+
+        let whitespace_or_alpha = Pattern(char::is_whitespace) | char::is_alphabetic;
+        assert!(whitespace_or_alpha.test("a"));
+        assert!(whitespace_or_alpha.test(" "));
+        assert!(!whitespace_or_alpha.test("*"));
+
+        let w_a_range = whitespace_or_alpha * (1..=2);
+        assert!(w_a_range.test("a"));
+        assert!(w_a_range.test("a "));
+        assert!(!w_a_range.test(""));
+        assert!(!w_a_range.test("z+"));
+        assert!(!w_a_range.test(" f "));
     }
 
     #[test]

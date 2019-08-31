@@ -37,7 +37,7 @@ pub trait Scan {
 
     fn test(&self, text: &str) -> bool {
         match self.scan(text) {
-            Ok(len) if text.len() == len => true,
+            Ok(len) => text.len() == len,
             _ => false,
         }
     }
@@ -98,6 +98,15 @@ impl Scan for char {
         }
         else {
             Err(())
+        }
+    }
+}
+
+impl<F: Fn(char) -> bool> Scan for F {
+    fn scan(&self, text: &str) -> ScanResult {
+        match text.chars().next() {
+            Some(ch) if self(ch) => Ok(ch.len_utf8()),
+            _ => Err(()),
         }
     }
 }
@@ -172,6 +181,7 @@ mod tests {
         assert_eq!(pattern.scan("a"), Ok(1));
         assert_eq!(pattern.scan("ab"), Ok(1));
         assert_eq!(pattern.scan("b"), Err(()));
+        assert_eq!(pattern.scan(""), Err(()));
     }
 
     #[test]
@@ -180,5 +190,33 @@ mod tests {
         assert_eq!(pattern.scan("ф"), Ok(pattern.len_utf8()));
         assert_eq!(pattern.scan("фы"), Ok(pattern.len_utf8()));
         assert_eq!(pattern.scan("ы"), Err(()));
+    }
+
+    #[test]
+    fn scan_fn() {
+        let whitespace = char::is_whitespace;
+        assert_eq!(whitespace.scan(" "), Ok(1));
+        assert_eq!(whitespace.scan(""), Err(()));
+        assert_eq!(whitespace.scan("."), Err(()));
+
+        let alpha = char::is_alphabetic;
+        assert_eq!(alpha.scan("a"), Ok(1));
+        assert_eq!(alpha.scan("."), Err(()));
+
+        let a_or_b = |c: char| c == 'a' || c == 'b';
+        assert_eq!(a_or_b.scan("a"), Ok(1));
+        assert_eq!(a_or_b.scan("b"), Ok(1));
+        assert_eq!(a_or_b.scan("c"), Err(()));
+    }
+
+    #[test]
+    fn test_fn() {
+        let whitespace = |c: char| c.is_whitespace();
+        assert!(whitespace.test(" "));
+        assert!(!whitespace.test("-"));
+
+        let not_a = |c: char| c != 'a';
+        assert!(not_a.test("x"));
+        assert!(!not_a.test("a"));
     }
 }
