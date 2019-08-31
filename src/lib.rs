@@ -9,3 +9,9 @@ pub use scan::{
 };
 
 pub use pattern::Pattern;
+pub use complex_patterns::{
+    OrPattern,
+    AndPattern,
+    ManyPattern,
+    RangePattern,
+};

@@ -31,7 +31,7 @@ pub trait Scan {
     /// let pattern = "aaa";
     /// assert_eq!(pattern.scan("abc"), Err(()));
     /// ```
-    /// In that case pattern is not matching and `scan` returns `Err(())`.
+    /// In that case pattern is not matching `scan` returns `Err(())`.
     ///
     fn scan(&self, text: &str) -> ScanResult;
 
@@ -75,7 +75,7 @@ impl Scan for &str {
     /// assert_eq!(empty_pattern.scan(""), Ok(0));
     /// ```
     ///
-    fn scan(&self, text: &str) -> Result<usize, ()> {
+    fn scan(&self, text: &str) -> ScanResult {
         if text.starts_with(self) {
             Ok(self.len())
         }
@@ -86,13 +86,13 @@ impl Scan for &str {
 }
 
 impl Scan for String {
-    fn scan(&self, text: &str) -> Result<usize, ()> {
+    fn scan(&self, text: &str) -> ScanResult {
         self.as_str().scan(text)
     }
 }
 
 impl Scan for char {
-    fn scan(&self, text: &str) -> Result<usize, ()> {
+    fn scan(&self, text: &str) -> ScanResult {
         if text.starts_with(*self) {
             Ok(self.len_utf8())
         }
@@ -139,7 +139,15 @@ mod tests {
     }
 
     #[test]
-    fn scan_test() {
+    fn scan_empty_string() {
+        let pattern = String::from("some text");
+        assert_eq!(pattern.scan("some text"), Ok(pattern.len()));
+        assert_eq!(pattern.scan("some text more"), Ok(pattern.len()));
+        assert_eq!(pattern.scan("text"), Err(()));
+    }
+
+    #[test]
+    fn test_str() {
         let pattern = "baz";
         assert!(pattern.test("baz"));
         assert!(!pattern.test("bar"));
