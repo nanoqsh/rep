@@ -31,13 +31,13 @@ pub trait Scan {
     /// let pattern = "aaa";
     /// assert_eq!(pattern.scan("abc"), Err(()));
     /// ```
-    /// In that case pattern is not matching and `scan` returns `Err(())`.
+    /// In that case pattern is not matching `scan` returns `Err(())`.
     ///
     fn scan(&self, text: &str) -> ScanResult;
 
     fn test(&self, text: &str) -> bool {
         match self.scan(text) {
-            Ok(len) if text.len() == len => true,
+            Ok(len) => text.len() == len,
             _ => false,
         }
     }
@@ -75,7 +75,7 @@ impl Scan for &str {
     /// assert_eq!(empty_pattern.scan(""), Ok(0));
     /// ```
     ///
-    fn scan(&self, text: &str) -> Result<usize, ()> {
+    fn scan(&self, text: &str) -> ScanResult {
         if text.starts_with(self) {
             Ok(self.len())
         }
@@ -86,18 +86,27 @@ impl Scan for &str {
 }
 
 impl Scan for String {
-    fn scan(&self, text: &str) -> Result<usize, ()> {
+    fn scan(&self, text: &str) -> ScanResult {
         self.as_str().scan(text)
     }
 }
 
 impl Scan for char {
-    fn scan(&self, text: &str) -> Result<usize, ()> {
+    fn scan(&self, text: &str) -> ScanResult {
         if text.starts_with(*self) {
             Ok(self.len_utf8())
         }
         else {
             Err(())
+        }
+    }
+}
+
+impl<F: Fn(char) -> bool> Scan for F {
+    fn scan(&self, text: &str) -> ScanResult {
+        match text.chars().next() {
+            Some(ch) if self(ch) => Ok(ch.len_utf8()),
+            _ => Err(()),
         }
     }
 }
@@ -139,7 +148,15 @@ mod tests {
     }
 
     #[test]
-    fn scan_test() {
+    fn scan_empty_string() {
+        let pattern = String::from("some text");
+        assert_eq!(pattern.scan("some text"), Ok(pattern.len()));
+        assert_eq!(pattern.scan("some text more"), Ok(pattern.len()));
+        assert_eq!(pattern.scan("text"), Err(()));
+    }
+
+    #[test]
+    fn test_str() {
         let pattern = "baz";
         assert!(pattern.test("baz"));
         assert!(!pattern.test("bar"));
@@ -156,10 +173,6 @@ mod tests {
 
         let err_split = "bar";
         assert_eq!(pattern.scan_split(err_split), Err(()));
-
-        let empty = "";
-        let any_str = "text";
-        assert_eq!(empty.scan_split(any_str), Ok(("", "text")));
     }
 
     #[test]
@@ -168,6 +181,7 @@ mod tests {
         assert_eq!(pattern.scan("a"), Ok(1));
         assert_eq!(pattern.scan("ab"), Ok(1));
         assert_eq!(pattern.scan("b"), Err(()));
+        assert_eq!(pattern.scan(""), Err(()));
     }
 
     #[test]
@@ -176,5 +190,33 @@ mod tests {
         assert_eq!(pattern.scan("ф"), Ok(pattern.len_utf8()));
         assert_eq!(pattern.scan("фы"), Ok(pattern.len_utf8()));
         assert_eq!(pattern.scan("ы"), Err(()));
+    }
+
+    #[test]
+    fn scan_fn() {
+        let whitespace = char::is_whitespace;
+        assert_eq!(whitespace.scan(" "), Ok(1));
+        assert_eq!(whitespace.scan(""), Err(()));
+        assert_eq!(whitespace.scan("."), Err(()));
+
+        let alpha = char::is_alphabetic;
+        assert_eq!(alpha.scan("a"), Ok(1));
+        assert_eq!(alpha.scan("."), Err(()));
+
+        let a_or_b = |c: char| c == 'a' || c == 'b';
+        assert_eq!(a_or_b.scan("a"), Ok(1));
+        assert_eq!(a_or_b.scan("b"), Ok(1));
+        assert_eq!(a_or_b.scan("c"), Err(()));
+    }
+
+    #[test]
+    fn test_fn() {
+        let whitespace = |c: char| c.is_whitespace();
+        assert!(whitespace.test(" "));
+        assert!(!whitespace.test("-"));
+
+        let not_a = |c: char| c != 'a';
+        assert!(not_a.test("x"));
+        assert!(!not_a.test("a"));
     }
 }
