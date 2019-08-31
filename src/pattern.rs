@@ -1,15 +1,33 @@
 
 use crate::Scan;
+use std::ops::{BitOr, BitAnd};
+use crate::complex_patterns::{OrPattern, AndPattern};
 
 /// Struct for `Scan` trait using.
 /// Thus usually it is `Pattern<T: Scan>(T)`.
-/// Also the `Pattern` itself implements `Scan` trait.
+/// Also the `Pattern<T: Scan>` itself implements `Scan` trait.
 ///
 pub struct Pattern<T>(pub T);
 
 impl<T: Scan> Scan for Pattern<T> {
     fn scan(&self, text: &str) -> Result<usize, ()> {
         self.0.scan(text)
+    }
+}
+
+impl<A: Scan, B: Scan> BitOr<B> for Pattern<A> {
+    type Output = Pattern<OrPattern<A, B>>;
+
+    fn bitor(self, rhs: B) -> Self::Output {
+        Pattern(OrPattern(self.0, rhs))
+    }
+}
+
+impl<A: Scan, B: Scan> BitAnd<B> for Pattern<A> {
+    type Output = Pattern<AndPattern<A, B>>;
+
+    fn bitand(self, rhs: B) -> Self::Output {
+        Pattern(AndPattern(self.0, rhs))
     }
 }
 

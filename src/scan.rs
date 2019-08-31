@@ -141,11 +141,11 @@ mod tests {
     #[test]
     fn scan_test() {
         let pattern = "baz";
-        let same = "baz";
-        assert!(pattern.test(same));
+        assert!(pattern.test("baz"));
+        assert!(!pattern.test("bar"));
 
-        let another = "bar";
-        assert!(!pattern.test(another));
+        let empty_pattern = "";
+        assert!(empty_pattern.test(""));
     }
 
     #[test]
