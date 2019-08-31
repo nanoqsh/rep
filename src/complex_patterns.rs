@@ -87,7 +87,9 @@ pub struct RangePattern<T, R>(pub T, pub R);
 impl<T: Scan, R: RangeBounds<u32>> Scan for RangePattern<T, R> {
     fn scan(&self, text: &str) -> ScanResult {
 
-        // todo: check empty pattern + unbound range
+        if self.0.test("") && self.1.end_bound() == Bound::Unbounded {
+            panic!("Infinity loop")
+        }
 
         let mut len = 0;
         let mut count = 0;
@@ -110,7 +112,6 @@ impl<T: Scan, R: RangeBounds<u32>> Scan for RangePattern<T, R> {
         }
     }
 }
-
 
 #[cfg(test)]
 mod tests {
@@ -237,5 +238,12 @@ mod tests {
         assert!(b_bb.test("0101"));
         assert!(!b_bb.test("010101"));
         assert!(!b_bb.test(""));
+    }
+
+    #[test]
+    #[should_panic(expected = "Infinity loop")]
+    fn infinity_loop_panic() {
+        let empty_pattern = Pattern("") * (1..);
+        empty_pattern.test("a");
     }
 }

@@ -164,10 +164,6 @@ mod tests {
 
         let err_split = "bar";
         assert_eq!(pattern.scan_split(err_split), Err(()));
-
-        let empty = "";
-        let any_str = "text";
-        assert_eq!(empty.scan_split(any_str), Ok(("", "text")));
     }
 
     #[test]
