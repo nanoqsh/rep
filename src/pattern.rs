@@ -1,6 +1,4 @@
 
-use crate::Scan;
-
 use std::ops::{
     BitOr,
     BitAnd,
@@ -13,12 +11,30 @@ use std::ops::{
     RangeInclusive,
 };
 
-use crate::complex_patterns::{
-    OrPattern,
-    AndPattern,
-    ManyPattern,
-    RangePattern,
-};
+use crate::complex_patterns::{OrPattern, AndPattern, ManyPattern, RangePattern};
+use crate::{Scan, ScanResult};
+
+pub struct Matches<'a, 'b, P> {
+    pattern: &'b P,
+    rest: &'a str,
+}
+
+impl<'a, 'b, P: Scan> Iterator for Matches<'a, 'b , P> {
+    type Item = &'a str;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        loop {
+            match self.pattern.scan_split(self.rest) {
+                Ok((left, right)) => {
+                    self.rest = right;
+                    break Some(left)
+                },
+                _ if self.rest.len() == 0 => break None,
+                _ => self.rest = &self.rest[1..],
+            }
+        }
+    }
+}
 
 /// Struct for `Scan` trait using.
 /// Also the `Pattern<T: Scan>` itself implements `Scan` trait.
@@ -26,8 +42,17 @@ use crate::complex_patterns::{
 #[derive(Copy, Clone)]
 pub struct Pattern<T>(pub T);
 
+impl<T: Scan> Pattern<T> {
+    pub fn matches<'a, 'b>(&'b self, text: &'a str) -> Matches<'a, 'b, T> {
+        Matches {
+            pattern: &self.0,
+            rest: text,
+        }
+    }
+}
+
 impl<T: Scan> Scan for Pattern<T> {
-    fn scan(&self, text: &str) -> Result<usize, ()> {
+    fn scan(&self, text: &str) -> ScanResult {
         self.0.scan(text)
     }
 }
@@ -229,5 +254,19 @@ mod tests {
         assert_eq!(pattern.scan("a"), Ok(1));
         assert_eq!(pattern.scan("ab"), Ok(1));
         assert_eq!(pattern.scan("b"), Err(()));
+    }
+
+    #[test]
+    fn pattern_matches() {
+        let xy = Pattern("xy");
+        let xy_matches: Vec<&str> = xy.matches("abcxy yx xyxy xy xxxy.").collect();
+        assert_eq!(xy_matches, ["xy", "xy", "xy", "xy", "xy"]);
+
+        let xy_matches_empty: Vec<&str> = xy.matches("").collect();
+        assert!(xy_matches_empty.is_empty());
+
+        let x_y = Pattern('x') | 'y';
+        let x_y_matches: Vec<&str> = x_y.matches("abcxylol*yx").collect();
+        assert_eq!(x_y_matches, ["x", "y", "y", "x"]);
     }
 }
