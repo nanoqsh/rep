@@ -1,17 +1,12 @@
 
-mod pattern;
-mod complex_patterns;
-mod scan;
+mod captures;
+mod patterns;
+mod scan_term;
+mod capture;
+mod match_iterator;
 
-pub use scan::{
-    Scan,
-    ScanResult,
-};
-
-pub use pattern::{
-    Pattern,
-    Matches,
-};
+pub use scan_term::ScanTerm;
+pub use patterns::{Pattern, cap};
 
 #[cfg(test)]
 mod tests {
@@ -27,9 +22,5 @@ mod tests {
 
         assert!(hex.test("0xFF94"));
         assert!(hex.test("0x0012AB"));
-
-        let test_str = "( 0; 0x0;0x; 0xFF, 0x00AB) ";
-        let hex_matches: Vec<&str> = hex.matches(test_str).collect();
-        assert_eq!(hex_matches, ["0x0", "0xFF", "0x00AB"]);
     }
 }
