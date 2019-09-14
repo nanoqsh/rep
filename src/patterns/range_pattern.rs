@@ -25,12 +25,15 @@ impl<'a, S: Capture<'a>, R: RangeBounds<u32>> Capture<'a> for RangePattern<S, R>
         }
 
         let mut count = 0;
+        let mut len = 0;
         let mut cap = self.0.capture_empty(text);
 
         loop {
             match self.0.capture(cap.rest) {
-                Some(c) => {
+                Some(mut c) => {
                     count += 1;
+                    len += c.captures.captured_len();
+                    c.captures.captured_str = &text[..len];
                     cap = c;
 
                     match self.1.end_bound() {

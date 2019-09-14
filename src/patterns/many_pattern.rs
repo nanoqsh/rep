@@ -18,9 +18,12 @@ impl<'a, S: Capture<'a>> Capture<'a> for ManyPattern<S> {
 
     fn capture(&self, text: &'a str) -> Option<CaptureResult<'a, Self::Inner>> {
         let mut cap = self.0.capture_empty(text);
+        let mut len = 0;
 
         for _ in 0..self.1 {
             cap = self.0.capture(cap.rest)?;
+            len += cap.captures.captured_len();
+            cap.captures.captured_str = &text[..len];
         }
 
         Some(cap)
