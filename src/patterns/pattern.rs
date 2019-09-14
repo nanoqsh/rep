@@ -19,13 +19,17 @@ use crate::patterns::{OrPattern, AndPattern, Cap, ManyPattern, RangePattern};
 pub struct Pattern<S>(pub S);
 
 impl<'a, S: Capture<'a>> Pattern<S> {
-    pub fn matches(self, text: &'a str) -> MatchIterator<S> {
+    pub fn matches(self, text: &'a str) -> MatchIterator<'a, S> {
         MatchIterator::new(self.0, text)
+    }
+
+    pub fn matched_strs(self, text: &'a str) -> impl Iterator<Item=&'a str> {
+        self.matches(text).map(|m| m.captured_str)
     }
 
     pub fn test(&self, text: &'a str) -> bool {
         match self.0.capture(text) {
-            Some(res) => res.rest == "",
+            Some(res) => res.rest.is_empty(),
             None => false,
         }
     }
@@ -250,15 +254,13 @@ mod tests {
     fn pattern_matches() {
         let xy = Pattern("xy");
         let xy_matches: Vec<&str> = xy
-            .matches("ab cxy yx xy x xxy.")
-            .into_strs()
+            .matched_strs("ab cxy yx xy x xxy.")
             .collect();
         assert_eq!(xy_matches, ["xy", "xy", "xy"]);
 
         let x_y = Pattern('x') | 'y';
         let x_y_matches: Vec<&str> = x_y
-            .matches("ab cx y lol*yx")
-            .into_strs()
+            .matched_strs("ab cx y lol*yx")
             .collect();
         assert_eq!(x_y_matches, ["x", "y", "y", "x"]);
     }

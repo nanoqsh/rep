@@ -23,4 +23,20 @@ mod tests {
         assert!(hex.test("0xFF94"));
         assert!(hex.test("0x0012AB"));
     }
+
+    #[test]
+    fn parse() {
+        let space = Pattern(' ') * ..;
+        let name = Pattern(char::is_alphabetic) & Pattern(char::is_alphabetic) * ..;
+        let arg = name & Pattern(',') & space;
+        let args = (arg * ..) & name & space;
+        let func = name & space & '(' & space & args & ')' & space & ';';
+
+        assert!(func.test("foo ( bar,  num,  str ) ;"));
+        assert!(func.test("foo(bar, str);"));
+        assert!(func.test("foo(bar, str);"));
+        assert!(!func.test("foo num, str);"));
+        assert!(!func.test("foo(bar, num, );"));
+        assert!(!func.test("foo(bar, num, str)"));
+    }
 }

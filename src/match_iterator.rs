@@ -16,13 +16,6 @@ impl<'a, P: Capture<'a>> MatchIterator<'a, P> {
     }
 }
 
-impl<'a, P: Capture<'a>> MatchIterator<'a, P> {
-    pub fn into_strs(self) -> impl Iterator<Item = &'a str> where
-        Self: Iterator<Item = Captures<'a, P::Inner>> {
-        self.map(|m| m.captured_str)
-    }
-}
-
 impl<'a, P: Capture<'a>> Iterator for MatchIterator<'a, P> {
     type Item = Captures<'a, P::Inner>;
 
