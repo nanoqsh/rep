@@ -29,14 +29,16 @@ mod tests {
         let space = Pattern(' ') * ..;
         let name = Pattern(char::is_alphabetic) & Pattern(char::is_alphabetic) * ..;
         let arg = name & Pattern(',') & space;
-        let args = (arg * ..) & name & space;
+        let args = (arg * ..) & name & space | space;
         let func = name & space & '(' & space & args & ')' & space & ';';
 
-        assert!(func.test("foo ( bar,  num,  str ) ;"));
-        assert!(func.test("foo(bar, str);"));
-        assert!(func.test("foo(bar, str);"));
-        assert!(!func.test("foo num, str);"));
-        assert!(!func.test("foo(bar, num, );"));
-        assert!(!func.test("foo(bar, num, str)"));
+        assert!(func.test("func();"));
+        assert!(func.test("func ( bar,  num,  str ) ;"));
+        assert!(func.test("func(bar, str);"));
+        assert!(func.test("func(bar);"));
+        assert!(!func.test("func num, str);"));
+        assert!(!func.test("func(bar, num, );"));
+        assert!(!func.test("func(bar, num, str)"));
+        assert!(!func.test("func(bar str);"));
     }
 }
