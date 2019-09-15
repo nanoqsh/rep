@@ -29,7 +29,7 @@ Or for example, a function parser in a code snippet:
 ```rust
 let space = Pattern(' ') * ..;
 let name = Pattern(char::is_alphabetic) & Pattern(char::is_alphabetic) * ..;
-let arg = name & Pattern(',') & space;
+let arg = name & ',' & space;
 let args = (arg * ..) & name & space | space;
 let func = name & space & '(' & space & args & ')' & space & ';';
 
