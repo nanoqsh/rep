@@ -23,7 +23,7 @@ impl<'a, T> Into<(Captures<'a, T>, &'a str)> for CaptureResult<'a, T> {
 }
 
 pub trait Capture<'a> {
-    type Inner: Copy;
+    type Inner: Clone;
     fn capture(&self, text: &'a str) -> Option<CaptureResult<'a, Self::Inner>>;
     fn capture_empty(&self, text: &'a str) -> CaptureResult<'a, Self::Inner>;
 }

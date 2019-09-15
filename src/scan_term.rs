@@ -1,3 +1,4 @@
+use std::ops::{Range, RangeInclusive};
 
 /// Object which implements ScanTerm trait
 /// is terminal element of pattern expression tree
@@ -94,6 +95,30 @@ impl<F: Fn(char) -> bool> ScanTerm for F {
     }
 }
 
+impl ScanTerm for Range<char> {
+    fn scan_term(&self, text: &str) -> Option<usize> {
+        let ch = text.chars().next()?;
+        if self.contains(&ch) {
+            Some(ch.len_utf8())
+        }
+        else {
+            None
+        }
+    }
+}
+
+impl ScanTerm for RangeInclusive<char> {
+    fn scan_term(&self, text: &str) -> Option<usize> {
+        let ch = text.chars().next()?;
+        if self.contains(&ch) {
+            Some(ch.len_utf8())
+        }
+        else {
+            None
+        }
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -184,5 +209,18 @@ mod tests {
         let not_a = |c: char| c != 'a';
         assert_eq!(not_a.scan_term("x"), Some(1));
         assert_eq!(not_a.scan_term("a"), None);
+    }
+
+    #[test]
+    fn scan_range() {
+        let alpha = 'a'..='z';
+        assert_eq!(alpha.scan_term("a"), Some(1));
+        assert_eq!(alpha.scan_term("$"), None);
+        assert_eq!(alpha.scan_term("1"), None);
+
+        let binary = '0'..'2';
+        assert_eq!(binary.scan_term("0"), Some(1));
+        assert_eq!(binary.scan_term("1"), Some(1));
+        assert_eq!(binary.scan_term("2"), None);
     }
 }
