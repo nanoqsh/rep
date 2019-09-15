@@ -14,14 +14,15 @@ mod tests {
 
     #[test]
     fn parse_hex() {
-        let number = Pattern(|c: char| match c {
-            '0'..='9' | 'A'..='F' => true,
-            _ => false,
-        });
+        let number = Pattern('A'..='F') | ('0'..='9');
         let hex = Pattern('0') & 'x' & number * (1..);
 
         assert!(hex.test("0xFF94"));
-        assert!(hex.test("0x0012AB"));
+        assert!(hex.test("0x12AB"));
+        assert!(!hex.test("0x0G"));
+        assert!(!hex.test("0x"));
+        assert!(!hex.test("0+0"));
+        assert!(!hex.test("0A"));
     }
 
     #[test]
