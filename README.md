@@ -10,6 +10,8 @@ You can use strings, chars, functions, or ranges as a pattern.
 ```rust
 let pattern = Pattern('a') | Pattern('b');
 let or_shorter = Pattern('a') | 'b';
+assert!(pattern.test("a"));
+assert!(pattern.test("b"));
 ```
 
 This allows you to construct any expression. For example, a parser for a hexadecimal number:
