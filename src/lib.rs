@@ -23,13 +23,16 @@ mod tests {
         assert!(!hex.test("0x"));
         assert!(!hex.test("0+0"));
         assert!(!hex.test("0A"));
+
+        let numbers: Vec<&str> = hex.matched_strs("0x00 0x01 0xAB 0xFF").collect();
+        assert_eq!(numbers, ["0x00", "0x01", "0xAB", "0xFF"]);
     }
 
     #[test]
     fn parse() {
         let space = Pattern(' ') * ..;
         let name = Pattern(char::is_alphabetic) & Pattern(char::is_alphabetic) * ..;
-        let arg = name & Pattern(',') & space;
+        let arg = name & ',' & space;
         let args = (arg * ..) & name & space | space;
         let func = name & space & '(' & space & args & ')' & space & ';';
 
